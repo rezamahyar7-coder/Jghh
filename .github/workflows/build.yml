@@ -1,0 +1,45 @@
+name: Build APK
+
+on:
+  push:
+    branches: [main, master]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Unzip project
+        run: |
+          unzip -q project.zip -d src
+          ROOT=$(find src -name settings.gradle.kts | head -1 | xargs dirname)
+          echo "PROJECT_ROOT=$ROOT" >> $GITHUB_ENV
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+
+      - uses: gradle/actions/setup-gradle@v4
+
+      - uses: android-actions/setup-android@v3
+        with:
+          packages: "platforms;android-35 build-tools;35.0.0 platform-tools"
+
+      - run: yes | sdkmanager --licenses >/dev/null || true
+
+      - name: Build Debug APK
+        working-directory: ${{ env.PROJECT_ROOT }}
+        run: |
+          if [ -f gradlew ]; then chmod +x gradlew && ./gradlew assembleDebug --stacktrace --no-daemon
+          else gradle assembleDebug --stacktrace --no-daemon
+          fi
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: GeminiCoder-debug
+          path: ${{ env.PROJECT_ROOT }}/app/build/outputs/apk/debug/*.apk
+          if-no-files-found: error
+          retention-days: 30
