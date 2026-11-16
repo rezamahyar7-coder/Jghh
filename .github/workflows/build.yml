@@ -13,7 +13,7 @@ jobs:
 
       - name: Unzip project
         run: |
-          unzip -q project.zip -d src
+          unzip -q GeminiCoder-GitHub-1.zip -d src
           ROOT=$(find src -name settings.gradle.kts | head -1 | xargs dirname)
           echo "PROJECT_ROOT=$ROOT" >> $GITHUB_ENV
 
